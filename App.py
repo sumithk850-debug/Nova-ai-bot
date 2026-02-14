@@ -1,52 +1,53 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Standard Page Configuration
+# Page setup
 st.set_page_config(page_title="Nova AI", page_icon="🤖")
 
-# Securely fetch the API Key from Streamlit Secrets
+# Connection to Gemini API using Secrets
 try:
     if "GEMINI_API_KEY" in st.secrets:
         API_KEY = st.secrets["GEMINI_API_KEY"]
         genai.configure(api_key=API_KEY)
     else:
-        st.error("Missing GEMINI_API_KEY in Secrets.")
+        st.error("API Key not found in Streamlit Secrets.")
         st.stop()
 except Exception as e:
-    st.error(f"Secret Error: {e}")
+    st.error(f"Configuration Error: {e}")
     st.stop()
 
-# Using 'gemini-pro' for maximum compatibility
+# AI Model Configuration
 model = genai.GenerativeModel(
-    model_name="gemini-pro",
-    system_instruction="Your name is Nova. You were created by Hasith. Be helpful."
+    model_name="gemini-1.5-flash",
+    system_instruction="Your name is Nova. You were created by Hasith. You are a professional and friendly AI assistant."
 )
 
-# App Interface
+# User Interface
 st.title("🤖 Nova AI")
 st.markdown("---")
-st.caption("Developed by: **Hasith**")
+st.caption("Developed by: Hasith")
 
-# Initialize Chat Memory
+# Initialize chat memory
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Show previous messages
+# Show previous chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Input for the user
-if prompt := st.chat_input("Ask Nova anything..."):
+# Handle user input
+if prompt := st.chat_input("Message Nova..."):
+    # Add user message to history
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Generate Nova's response
     with st.chat_message("assistant"):
         try:
-            # Generate the response
             response = model.generate_content(prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error("Nova is having trouble connecting. Please check your API Key.")
+            st.error("Connection failed. Please verify your API Key in Streamlit Secrets.")
